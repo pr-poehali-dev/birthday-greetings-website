@@ -5,16 +5,19 @@ import { useState, useEffect } from "react";
 
 const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [hearts, setHearts] = useState<Array<{id: number, left: number, delay: number}>>([]);
+  const [hearts, setHearts] = useState<Array<{id: number, left: number, delay: number, wish: string}>>([]);
   const [clickedCards, setClickedCards] = useState<Set<number>>(new Set());
+  const [showWish, setShowWish] = useState<{show: boolean, text: string, x: number, y: number}>({show: false, text: '', x: 0, y: 0});
 
   // Генерация падающих сердечек
   useEffect(() => {
     const generateHeart = () => {
+      const randomWish = wishes[Math.floor(Math.random() * wishes.length)];
       const newHeart = {
         id: Date.now() + Math.random(),
         left: Math.random() * 100,
-        delay: Math.random() * 2
+        delay: Math.random() * 2,
+        wish: randomWish
       };
       setHearts(prev => [...prev, newHeart]);
       
@@ -57,7 +60,13 @@ const Index = () => {
     "Пусть каждый день приносит тебе радость и вдохновение",
     "Желаю, чтобы все твои мечты сбывались легко и красиво", 
     "Пусть любовь окружает тебя везде и всегда",
-    "Счастья тебе безграничного, моя дорогая"
+    "Счастья тебе безграничного, моя дорогая",
+    "Ты самая красивая и удивительная!",
+    "Пусть удача следует за тобой по пятам",
+    "Твоя улыбка освещает весь мир",
+    "С тобой каждый день как праздник",
+    "Ты заслуживаешь только самого лучшего",
+    "Пусть все твои желания исполнятся"
   ];
 
   return (
@@ -66,15 +75,56 @@ const Index = () => {
       {hearts.map((heart) => (
         <div
           key={heart.id}
-          className="absolute text-2xl text-primary animate-fall pointer-events-none z-10"
+          className="absolute text-2xl text-primary animate-fall cursor-pointer hover:scale-125 transition-transform z-10"
           style={{
             left: `${heart.left}%`,
             animationDelay: `${heart.delay}s`
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            const rect = e.currentTarget.getBoundingClientRect();
+            setShowWish({
+              show: true,
+              text: heart.wish,
+              x: rect.left + rect.width / 2,
+              y: rect.top
+            });
+            // Удаляем сердечко при клике
+            setHearts(prev => prev.filter(h => h.id !== heart.id));
+            
+            setTimeout(() => {
+              setShowWish(prev => ({...prev, show: false}));
+            }, 3000);
           }}
         >
           💖
         </div>
       ))}
+
+      {/* Всплывающее пожелание */}
+      {showWish.show && (
+        <div
+          className="fixed z-50 pointer-events-none animate-fade-in"
+          style={{
+            left: `${showWish.x}px`,
+            top: `${showWish.y - 100}px`,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <div className="bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-2xl border border-romantic-pink/30 max-w-xs">
+            <div className="flex items-center gap-2 mb-2">
+              <Icon name="Sparkles" size={16} className="text-primary animate-wiggle" />
+              <span className="font-script text-sm text-primary font-medium">Пожелание для тебя</span>
+            </div>
+            <p className="font-sans text-sm text-foreground/90 leading-relaxed">
+              {showWish.text}
+            </p>
+            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+              <div className="w-4 h-4 bg-white/95 backdrop-blur-sm border-b border-r border-romantic-pink/30 transform rotate-45"></div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Hero Section */}
       <section className="min-h-screen flex items-center justify-center px-4 relative z-20">
         <div className="text-center max-w-4xl mx-auto animate-fade-in">
@@ -161,11 +211,20 @@ const Index = () => {
             Мои пожелания для тебя
           </h2>
           
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-3 bg-white/60 backdrop-blur-sm px-6 py-3 rounded-full border border-romantic-pink/20">
+              <Icon name="MousePointer2" size={20} className="text-primary animate-wiggle" />
+              <span className="font-sans text-lg text-foreground/80">
+                Ловите падающие сердечки, чтобы прочитать пожелания! 💖
+              </span>
+            </div>
+          </div>
+          
           <div className="grid md:grid-cols-2 gap-6">
-            {wishes.map((wish, index) => (
+            {wishes.slice(0, 4).map((wish, index) => (
               <Card 
                 key={index}
-                className={`p-6 bg-white/60 backdrop-blur-sm hover:bg-white/90 transition-all duration-300 hover:scale-105 border-romantic-pink/20 cursor-pointer group ${
+                className={`p-6 bg-white/40 backdrop-blur-sm hover:bg-white/60 transition-all duration-300 hover:scale-105 border-romantic-pink/20 cursor-pointer group opacity-50 hover:opacity-100 ${
                   clickedCards.has(index + 10) ? 'animate-bounce-soft' : ''
                 }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
@@ -173,10 +232,10 @@ const Index = () => {
               >
                 <CardContent className="p-0">
                   <div className="flex items-center justify-center mb-4">
-                    <Icon name="Sparkles" size={24} className="text-primary group-hover:animate-wiggle" />
+                    <Icon name="Lock" size={24} className="text-primary/50 group-hover:animate-wiggle" />
                   </div>
-                  <p className="font-sans text-lg text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
-                    {wish}
+                  <p className="font-sans text-lg text-foreground/50 leading-relaxed group-hover:text-foreground/70 transition-colors text-center">
+                    Поймайте сердечко, чтобы разблокировать пожелание
                   </p>
                 </CardContent>
               </Card>
@@ -237,9 +296,9 @@ const Index = () => {
       <div className="fixed bottom-6 right-6 z-30">
         <Card className="p-3 bg-white/80 backdrop-blur-sm border-romantic-pink/20 hover:bg-white/90 transition-all duration-300 animate-bounce-soft">
           <CardContent className="p-0 flex items-center gap-2">
-            <Icon name="MousePointer2" size={16} className="text-primary animate-wiggle" />
+            <Icon name="Heart" size={16} className="text-primary animate-pulse-soft" />
             <span className="font-sans text-sm text-foreground/70">
-              Кликай везде! 💖
+              Ловите сердечки! 💖
             </span>
           </CardContent>
         </Card>
